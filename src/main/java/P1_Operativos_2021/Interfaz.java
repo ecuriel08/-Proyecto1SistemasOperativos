@@ -1,24 +1,155 @@
 package P1_Operativos_2021;
+
+import java.awt.Color;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.concurrent.Semaphore;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 /**
- * 30/11/2020
+ * 31/05/2020
  * @author Nicolas Bolinaga
- * @author Ricardo Micale
+ * @author Eduardo Curiel
  */
-import javax.swing.JOptionPane;
-import java.util.Arrays;
+
 
 public class Interfaz extends javax.swing.JFrame {
-    Productor[] prodsBoton = new Productor[4];
-    Productor[] prodsBrazo = new Productor[5];
-    Productor[] prodsPierna = new Productor[4];
-    Productor[] prodsCuerpo = new Productor[4];
-    int ensambladoresCount;
-    
-    public Interfaz() {
-        initComponents();
-        this.ensambladoresCount = 0;
-    }
+    int tiempoDia;
+    int diaDespachos;
+    int maxBotones;
+    int maxBrazos;
+    int maxPiernas;
+    int maxCuerpos;
+    int PBtnMax;
+    int PBraMax;
+    int PPieMax;
+    int PCueMax;
+    int EnsamMax;
+    int PBtnActivos;
+    int PBraActivos;
+    int PPieActivos;
+    int PCueActivos;
+    int EnsamActivos;
+    int jefeTrabajo;
+    int gerenteDescanso;
+    Almacen almacenBoton;
+    Almacen almacenBrazo;
+    Almacen almacenCuerpo;
+    Almacen almacenPierna;
+    Almacen almacenPana;
+    Almacen dias;
+    boolean activo = false;
+    Jefe jefe;
+    Gerente gerente;
+    Sout print;
+    Productor[] productoresBotones;
+    Productor[] productoresBrazos;
+    Productor[] productoresPiernas;
+    Productor[] productoresCuerpos;
+    Ensamblador[] ensambladores;
+    Semaphore mutex;
+    Semaphore semCons;
+    Semaphore semProdBoton;
+    Semaphore semProdBrazo;
+    Semaphore semProdPierna;
+    Semaphore semProdCuerpo;
+    Color clr = new Color(214, 154, 86);
+    static boolean gerenteTrabajando = false;
+    static boolean jefeTrabajando = false;
 
+    public Interfaz(){
+        initComponents();
+        readJSON();
+        
+        
+        // ARRAYS --------------------------------------------------------------------
+        productoresBotones = new Productor[PBtnMax];
+        productoresBrazos = new Productor[PBraMax];
+        productoresPiernas = new Productor[PPieMax];
+        productoresCuerpos = new Productor[PCueMax];
+        ensambladores = new Ensamblador[EnsamMax];
+
+        // ALMACENES -----------------------------------------------------------------
+        almacenBoton = new Almacen();
+        almacenBrazo = new Almacen();
+        almacenCuerpo = new Almacen();
+        almacenPierna = new Almacen();
+        almacenPana = new Almacen();
+        dias = new Almacen();
+
+        // SEMAFOROS ----------------------------------------------------------------
+        mutex = new Semaphore(PBtnMax+PBraMax+PPieMax+PCueMax+EnsamMax);
+        semCons = new Semaphore(0);
+        semProdBoton = new Semaphore(maxBotones);
+        semProdBrazo = new Semaphore(maxBrazos);
+        semProdPierna = new Semaphore(maxPiernas);
+        semProdCuerpo = new Semaphore(maxCuerpos);
+
+        Semaphore contador = new Semaphore(1);
+        Semaphore semJefe = new Semaphore(diaDespachos);
+        Semaphore semGerente = new Semaphore(0);
+
+        // PRODUCTORES ---------------------------------------------------------------
+        for(int i = 0; i < PBtnMax; i++){
+          productoresBotones[i] = new Productor(almacenBoton, 1, 4, tiempoDia, semCons, semProdBoton, mutex);
+        }
+        for(int i = 0; i < PBraMax; i++){
+          productoresBrazos[i] = new Productor(almacenBrazo, 1, 1, tiempoDia, semCons, semProdBrazo, mutex);
+        }
+        for(int i = 0; i < PPieMax; i++){
+          productoresPiernas[i] = new Productor(almacenPierna, 2, 1, tiempoDia, semCons, semProdPierna, mutex);
+        }
+        for(int i = 0; i < PCueMax; i++){
+          productoresCuerpos[i] = new Productor(almacenCuerpo, 3, 1, tiempoDia, semCons, semProdCuerpo, mutex);
+        }
+
+        // ENSAMBLADORES -----------------------------------------------------------------
+        for(int i = 0; i < EnsamMax; i++){
+          ensambladores[i] = new Ensamblador(semCons, mutex, semProdBoton, semProdBrazo, semProdPierna, semProdCuerpo, almacenPana,almacenBrazo,almacenPierna,almacenCuerpo,almacenBoton,2,2,1,8,tiempoDia);
+        }
+
+        // JEFE y GERENTE ---------------------------------------------------------
+        jefe = new Jefe(dias, tiempoDia, jefeTrabajo, semGerente, semJefe, contador);
+        gerente = new Gerente(almacenPana, dias, tiempoDia, gerenteDescanso, semGerente,  semJefe, contador, diaDespachos);
+        
+
+        // PRINT -----------------------------------------------------------------
+        print = new Sout(almacenPana, almacenBrazo, almacenPierna, almacenCuerpo, almacenBoton, tiempoDia, dias);
+
+        maxEmpleadosBrazo.setText("/ " + PBraMax);
+        maxEmpleadosCuerpo.setText("/ " + PCueMax);
+        maxEmpleadosBoton.setText("/ " + PBtnMax);
+        maxEmpleadosPierna.setText("/ " + PPieMax);
+        maxEmpleadosPana.setText("/ " + EnsamMax);   
+                
+        progressBarBrazo.setValue(PBraActivos);
+        progressBarCuerpo.setValue(PCueActivos);
+        progressBarBoton.setValue(PBtnActivos);
+        progressBarPierna.setValue(PPieActivos);
+        progressBarEnsam.setValue(EnsamActivos);
+        
+        progressBarBrazo.setMaximum(PBraMax);
+        progressBarCuerpo.setMaximum(PCueMax);
+        progressBarBoton.setMaximum(PBtnMax);
+        progressBarPierna.setMaximum(PPieMax);
+        progressBarEnsam.setMaximum(EnsamMax);
+        
+        prodsBrazos.setText(Integer.toString(PBraActivos));
+        prodsCuerpos.setText(Integer.toString(PCueActivos));
+        prodsBotones.setText(Integer.toString(PBtnActivos));
+        prodsPiernas.setText(Integer.toString(PPieActivos));
+        ensambladoresActivos.setText(Integer.toString(EnsamActivos));
+        
+        
+    }
+    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -38,7 +169,7 @@ public class Interfaz extends javax.swing.JFrame {
         crearProdPierna = new javax.swing.JButton();
         deleteProdPierna = new javax.swing.JButton();
         prodsPiernas = new javax.swing.JTextField();
-        maxEmpleadosBrazo1 = new javax.swing.JLabel();
+        maxEmpleadosPierna = new javax.swing.JLabel();
         progressBarPierna = new javax.swing.JProgressBar();
         productorPiernasPanel1 = new javax.swing.JPanel();
         productorBrazoLabel2 = new javax.swing.JLabel();
@@ -46,13 +177,13 @@ public class Interfaz extends javax.swing.JFrame {
         deleteProdBoton = new javax.swing.JButton();
         progressBarBoton = new javax.swing.JProgressBar();
         prodsBotones = new javax.swing.JTextField();
-        maxEmpleadosBrazo2 = new javax.swing.JLabel();
+        maxEmpleadosBoton = new javax.swing.JLabel();
         productorPiernasPanel2 = new javax.swing.JPanel();
         productorBrazoLabel3 = new javax.swing.JLabel();
         crearProdCuerpo = new javax.swing.JButton();
         deleteProdCuerpo = new javax.swing.JButton();
         prodsCuerpos = new javax.swing.JTextField();
-        maxEmpleadosBrazo3 = new javax.swing.JLabel();
+        maxEmpleadosCuerpo = new javax.swing.JLabel();
         progressBarCuerpo = new javax.swing.JProgressBar();
         panelAlmacen = new javax.swing.JPanel();
         almacenBrazoPanel = new javax.swing.JPanel();
@@ -72,7 +203,7 @@ public class Interfaz extends javax.swing.JFrame {
         maxAlmacenPierna = new javax.swing.JLabel();
         almacenCuerpoPanel = new javax.swing.JPanel();
         almacenBrazoLabel3 = new javax.swing.JLabel();
-        progressBarAlmacenCuerpo3 = new javax.swing.JProgressBar();
+        progressBarAlmacenCuerpo = new javax.swing.JProgressBar();
         cantidadAlmacenCuerpo = new javax.swing.JTextField();
         maxAlmacenCuerpo = new javax.swing.JLabel();
         panelProduccion1 = new javax.swing.JPanel();
@@ -81,13 +212,29 @@ public class Interfaz extends javax.swing.JFrame {
         crearEnsam = new javax.swing.JButton();
         deleteEnsam = new javax.swing.JButton();
         progressBarEnsam = new javax.swing.JProgressBar();
-        ensambladores = new javax.swing.JTextField();
+        ensambladoresActivos = new javax.swing.JTextField();
         maxEmpleadosPana = new javax.swing.JLabel();
         almacenBrazoPanel4 = new javax.swing.JPanel();
         almacenPanaLabel = new javax.swing.JLabel();
         cantidadAlmacenPana = new javax.swing.JTextField();
         ensamblar = new javax.swing.JButton();
+        notice = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        jPanel3 = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
+        jPanel5 = new javax.swing.JPanel();
+        jLabel3 = new javax.swing.JLabel();
+        jefeDescansa = new javax.swing.JPanel();
+        jefeTrabaja = new javax.swing.JPanel();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        jPanel6 = new javax.swing.JPanel();
+        jLabel4 = new javax.swing.JLabel();
+        gerDescansa = new javax.swing.JPanel();
+        gerTrabaja = new javax.swing.JPanel();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -147,13 +294,13 @@ public class Interfaz extends javax.swing.JFrame {
         prodsBrazos.setBorder(null);
         prodsBrazos.setPreferredSize(new java.awt.Dimension(14, 20));
         productorBrazoPanel.add(prodsBrazos);
-        prodsBrazos.setBounds(260, 20, 20, 30);
+        prodsBrazos.setBounds(240, 20, 40, 40);
 
         maxEmpleadosBrazo.setFont(new java.awt.Font("Courier New", 0, 24)); // NOI18N
         maxEmpleadosBrazo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         maxEmpleadosBrazo.setText("/ 5");
         productorBrazoPanel.add(maxEmpleadosBrazo);
-        maxEmpleadosBrazo.setBounds(290, 20, 50, 30);
+        maxEmpleadosBrazo.setBounds(270, 20, 90, 40);
 
         progressBarBrazo.setForeground(new java.awt.Color(255, 51, 51));
         progressBarBrazo.setMaximum(5);
@@ -202,13 +349,13 @@ public class Interfaz extends javax.swing.JFrame {
         prodsPiernas.setMinimumSize(new java.awt.Dimension(7, 25));
         prodsPiernas.setPreferredSize(new java.awt.Dimension(13, 21));
         productorPiernasPanel.add(prodsPiernas);
-        prodsPiernas.setBounds(260, 30, 20, 20);
+        prodsPiernas.setBounds(240, 30, 40, 20);
 
-        maxEmpleadosBrazo1.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
-        maxEmpleadosBrazo1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        maxEmpleadosBrazo1.setText("/ 4");
-        productorPiernasPanel.add(maxEmpleadosBrazo1);
-        maxEmpleadosBrazo1.setBounds(300, 30, 33, 20);
+        maxEmpleadosPierna.setFont(new java.awt.Font("Courier New", 0, 24)); // NOI18N
+        maxEmpleadosPierna.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        maxEmpleadosPierna.setText("/ 4");
+        productorPiernasPanel.add(maxEmpleadosPierna);
+        maxEmpleadosPierna.setBounds(270, 20, 90, 40);
 
         progressBarPierna.setForeground(new java.awt.Color(255, 51, 51));
         progressBarPierna.setMaximum(4);
@@ -260,19 +407,19 @@ public class Interfaz extends javax.swing.JFrame {
 
         prodsBotones.setEditable(false);
         prodsBotones.setBackground(new java.awt.Color(204, 204, 204));
-        prodsBotones.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
+        prodsBotones.setFont(new java.awt.Font("Courier New", 0, 24)); // NOI18N
         prodsBotones.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         prodsBotones.setText("0");
         prodsBotones.setBorder(null);
         prodsBotones.setMinimumSize(new java.awt.Dimension(7, 25));
         prodsBotones.setPreferredSize(new java.awt.Dimension(13, 21));
         productorPiernasPanel1.add(prodsBotones);
-        prodsBotones.setBounds(270, 30, 23, 20);
+        prodsBotones.setBounds(240, 30, 40, 20);
 
-        maxEmpleadosBrazo2.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
-        maxEmpleadosBrazo2.setText(" / 4");
-        productorPiernasPanel1.add(maxEmpleadosBrazo2);
-        maxEmpleadosBrazo2.setBounds(290, 30, 50, 20);
+        maxEmpleadosBoton.setFont(new java.awt.Font("Courier New", 0, 24)); // NOI18N
+        maxEmpleadosBoton.setText(" / 4");
+        productorPiernasPanel1.add(maxEmpleadosBoton);
+        maxEmpleadosBoton.setBounds(280, 20, 80, 40);
 
         productorPiernasPanel2.setBackground(new java.awt.Color(204, 204, 204));
         productorPiernasPanel2.setLayout(null);
@@ -304,19 +451,19 @@ public class Interfaz extends javax.swing.JFrame {
 
         prodsCuerpos.setEditable(false);
         prodsCuerpos.setBackground(new java.awt.Color(204, 204, 204));
-        prodsCuerpos.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
+        prodsCuerpos.setFont(new java.awt.Font("Courier New", 0, 24)); // NOI18N
         prodsCuerpos.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         prodsCuerpos.setText("0");
         prodsCuerpos.setBorder(null);
         prodsCuerpos.setMinimumSize(new java.awt.Dimension(7, 25));
         prodsCuerpos.setPreferredSize(new java.awt.Dimension(13, 21));
         productorPiernasPanel2.add(prodsCuerpos);
-        prodsCuerpos.setBounds(270, 30, 23, 21);
+        prodsCuerpos.setBounds(240, 30, 40, 21);
 
-        maxEmpleadosBrazo3.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
-        maxEmpleadosBrazo3.setText("/ 4");
-        productorPiernasPanel2.add(maxEmpleadosBrazo3);
-        maxEmpleadosBrazo3.setBounds(300, 30, 40, 20);
+        maxEmpleadosCuerpo.setFont(new java.awt.Font("Courier New", 0, 24)); // NOI18N
+        maxEmpleadosCuerpo.setText("/ 4");
+        productorPiernasPanel2.add(maxEmpleadosCuerpo);
+        maxEmpleadosCuerpo.setBounds(290, 20, 70, 40);
 
         progressBarCuerpo.setForeground(new java.awt.Color(255, 51, 51));
         progressBarCuerpo.setMaximum(4);
@@ -382,7 +529,7 @@ public class Interfaz extends javax.swing.JFrame {
 
         maxAlmacenBrazo.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
         maxAlmacenBrazo.setText("/40");
-        almacenBrazoPanel.add(maxAlmacenBrazo, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 10, 50, 30));
+        almacenBrazoPanel.add(maxAlmacenBrazo, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 10, 60, 30));
 
         almacenBotonPanel.setBackground(new java.awt.Color(204, 204, 204));
         almacenBotonPanel.setLayout(null);
@@ -409,7 +556,7 @@ public class Interfaz extends javax.swing.JFrame {
         maxAlmacenBoton.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
         maxAlmacenBoton.setText("/60");
         almacenBotonPanel.add(maxAlmacenBoton);
-        maxAlmacenBoton.setBounds(110, 10, 40, 30);
+        maxAlmacenBoton.setBounds(110, 10, 50, 30);
 
         almacenPiernaPanel.setBackground(new java.awt.Color(204, 204, 204));
         almacenPiernaPanel.setLayout(null);
@@ -436,7 +583,7 @@ public class Interfaz extends javax.swing.JFrame {
         maxAlmacenPierna.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
         maxAlmacenPierna.setText("/36");
         almacenPiernaPanel.add(maxAlmacenPierna);
-        maxAlmacenPierna.setBounds(110, 10, 50, 30);
+        maxAlmacenPierna.setBounds(110, 10, 60, 30);
 
         almacenCuerpoPanel.setBackground(new java.awt.Color(204, 204, 204));
         almacenCuerpoPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -445,9 +592,9 @@ public class Interfaz extends javax.swing.JFrame {
         almacenBrazoLabel3.setText("Cuerpos");
         almacenCuerpoPanel.add(almacenBrazoLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, -1, 23));
 
-        progressBarAlmacenCuerpo3.setMaximum(15);
-        progressBarAlmacenCuerpo3.setToolTipText("");
-        almacenCuerpoPanel.add(progressBarAlmacenCuerpo3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 40, 140, 23));
+        progressBarAlmacenCuerpo.setMaximum(15);
+        progressBarAlmacenCuerpo.setToolTipText("");
+        almacenCuerpoPanel.add(progressBarAlmacenCuerpo, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 40, 140, 23));
 
         cantidadAlmacenCuerpo.setEditable(false);
         cantidadAlmacenCuerpo.setBackground(new java.awt.Color(204, 204, 204));
@@ -467,15 +614,15 @@ public class Interfaz extends javax.swing.JFrame {
         panelAlmacenLayout.setHorizontalGroup(
             panelAlmacenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelAlmacenLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(panelAlmacenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(almacenPiernaPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 162, Short.MAX_VALUE)
-                    .addComponent(almacenBrazoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelAlmacenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(almacenBotonPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(almacenCuerpoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(14, Short.MAX_VALUE))
+                .addGap(23, 23, 23)
+                .addGroup(panelAlmacenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(almacenBrazoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(almacenPiernaPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 26, Short.MAX_VALUE)
+                .addGroup(panelAlmacenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(almacenBotonPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(almacenCuerpoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(27, 27, 27))
         );
         panelAlmacenLayout.setVerticalGroup(
             panelAlmacenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -491,7 +638,7 @@ public class Interfaz extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        panelFondo.add(panelAlmacen, new org.netbeans.lib.awtextra.AbsoluteConstraints(449, 6, 360, 190));
+        panelFondo.add(panelAlmacen, new org.netbeans.lib.awtextra.AbsoluteConstraints(399, 6, 410, 190));
 
         panelProduccion1.setBackground(new java.awt.Color(51, 51, 51));
         panelProduccion1.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Ensamblaje", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Copperplate Gothic Bold", 0, 12), new java.awt.Color(255, 255, 255))); // NOI18N
@@ -529,15 +676,15 @@ public class Interfaz extends javax.swing.JFrame {
         ensamblajePanaPanel.add(progressBarEnsam);
         progressBarEnsam.setBounds(210, 40, 110, 23);
 
-        ensambladores.setEditable(false);
-        ensambladores.setBackground(new java.awt.Color(204, 204, 204));
-        ensambladores.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
-        ensambladores.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        ensambladores.setText("0");
-        ensambladores.setBorder(null);
-        ensambladores.setPreferredSize(new java.awt.Dimension(14, 20));
-        ensamblajePanaPanel.add(ensambladores);
-        ensambladores.setBounds(250, 10, 22, 20);
+        ensambladoresActivos.setEditable(false);
+        ensambladoresActivos.setBackground(new java.awt.Color(204, 204, 204));
+        ensambladoresActivos.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
+        ensambladoresActivos.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        ensambladoresActivos.setText("0");
+        ensambladoresActivos.setBorder(null);
+        ensambladoresActivos.setPreferredSize(new java.awt.Dimension(14, 20));
+        ensamblajePanaPanel.add(ensambladoresActivos);
+        ensambladoresActivos.setBounds(250, 10, 22, 20);
 
         maxEmpleadosPana.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
         maxEmpleadosPana.setText("/5");
@@ -564,7 +711,7 @@ public class Interfaz extends javax.swing.JFrame {
             .addGroup(almacenBrazoPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(almacenPanaLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 37, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 66, Short.MAX_VALUE)
                 .addComponent(cantidadAlmacenPana, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(22, 22, 22))
         );
@@ -587,6 +734,21 @@ public class Interfaz extends javax.swing.JFrame {
             }
         });
 
+        notice.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 102, 0)), javax.swing.BorderFactory.createLineBorder(new java.awt.Color(51, 51, 51), 3)));
+        notice.setAlignmentX(0.0F);
+        notice.setAlignmentY(0.0F);
+
+        javax.swing.GroupLayout noticeLayout = new javax.swing.GroupLayout(notice);
+        notice.setLayout(noticeLayout);
+        noticeLayout.setHorizontalGroup(
+            noticeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 9, Short.MAX_VALUE)
+        );
+        noticeLayout.setVerticalGroup(
+            noticeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 10, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout panelProduccion1Layout = new javax.swing.GroupLayout(panelProduccion1);
         panelProduccion1.setLayout(panelProduccion1Layout);
         panelProduccion1Layout.setHorizontalGroup(
@@ -597,7 +759,9 @@ public class Interfaz extends javax.swing.JFrame {
                     .addComponent(ensamblajePanaPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(panelProduccion1Layout.createSequentialGroup()
                         .addComponent(almacenBrazoPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 66, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 64, Short.MAX_VALUE)
+                        .addComponent(notice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(ensamblar, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
@@ -606,146 +770,418 @@ public class Interfaz extends javax.swing.JFrame {
             .addGroup(panelProduccion1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(ensamblajePanaPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(panelProduccion1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(almacenBrazoPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(ensamblar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                .addGroup(panelProduccion1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelProduccion1Layout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addGroup(panelProduccion1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(almacenBrazoPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(ensamblar, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(panelProduccion1Layout.createSequentialGroup()
+                        .addGap(28, 28, 28)
+                        .addComponent(notice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(11, Short.MAX_VALUE))
         );
 
-        panelFondo.add(panelProduccion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 210, 360, 160));
-        panelProduccion1.getAccessibleContext().setAccessibleName("Ensamblaje");
+        panelFondo.add(panelProduccion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 200, 410, 170));
 
+        jPanel1.setBackground(new java.awt.Color(51, 51, 51));
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Estadisticas", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 0, 12), new java.awt.Color(255, 255, 255))); // NOI18N
+        jPanel1.setLayout(null);
+
+        jLabel1.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 51, 51));
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setText("MATTEL®");
-        panelFondo.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 190, 60, 30));
+        jPanel1.add(jLabel1);
+        jLabel1.setBounds(740, 110, 60, 30);
 
-        getContentPane().add(panelFondo, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 820, 400));
+        jPanel3.setBackground(new java.awt.Color(204, 204, 204));
+
+        jLabel2.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        jLabel2.setForeground(new java.awt.Color(51, 51, 51));
+        jLabel2.setText("Dias para la siguiente entrega:");
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGap(18, 18, 18)
+                .addComponent(jLabel2)
+                .addContainerGap(66, Short.MAX_VALUE))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 50, Short.MAX_VALUE)
+        );
+
+        jPanel1.add(jPanel3);
+        jPanel3.setBounds(10, 20, 350, 50);
+
+        jPanel5.setBackground(new java.awt.Color(204, 204, 204));
+
+        jLabel3.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel3.setForeground(new java.awt.Color(51, 51, 51));
+        jLabel3.setText("Estatus Jefe:");
+
+        jefeDescansa.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 102, 0)), javax.swing.BorderFactory.createLineBorder(new java.awt.Color(51, 51, 51), 3)));
+        jefeDescansa.setAlignmentX(0.0F);
+        jefeDescansa.setAlignmentY(0.0F);
+
+        javax.swing.GroupLayout jefeDescansaLayout = new javax.swing.GroupLayout(jefeDescansa);
+        jefeDescansa.setLayout(jefeDescansaLayout);
+        jefeDescansaLayout.setHorizontalGroup(
+            jefeDescansaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 10, Short.MAX_VALUE)
+        );
+        jefeDescansaLayout.setVerticalGroup(
+            jefeDescansaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 9, Short.MAX_VALUE)
+        );
+
+        jefeTrabaja.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 102, 0)), javax.swing.BorderFactory.createLineBorder(new java.awt.Color(51, 51, 51), 3)));
+        jefeTrabaja.setAlignmentX(0.0F);
+        jefeTrabaja.setAlignmentY(0.0F);
+
+        javax.swing.GroupLayout jefeTrabajaLayout = new javax.swing.GroupLayout(jefeTrabaja);
+        jefeTrabaja.setLayout(jefeTrabajaLayout);
+        jefeTrabajaLayout.setHorizontalGroup(
+            jefeTrabajaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 10, Short.MAX_VALUE)
+        );
+        jefeTrabajaLayout.setVerticalGroup(
+            jefeTrabajaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 9, Short.MAX_VALUE)
+        );
+
+        jLabel5.setForeground(new java.awt.Color(51, 51, 51));
+        jLabel5.setText("Descansando");
+
+        jLabel6.setForeground(new java.awt.Color(51, 51, 51));
+        jLabel6.setText("Trabajando");
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addGap(17, 17, 17)
+                .addComponent(jLabel3)
+                .addGap(18, 18, 18)
+                .addComponent(jefeDescansa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel5)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jefeTrabaja, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
+                .addComponent(jLabel6)
+                .addGap(22, 22, 22))
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(jLabel5)
+                        .addComponent(jefeDescansa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel6))
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addGap(1, 1, 1)
+                        .addComponent(jefeTrabaja, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(16, Short.MAX_VALUE))
+        );
+
+        jPanel1.add(jPanel5);
+        jPanel5.setBounds(10, 80, 350, 50);
+
+        jPanel6.setBackground(new java.awt.Color(204, 204, 204));
+
+        jLabel4.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel4.setForeground(new java.awt.Color(51, 51, 51));
+        jLabel4.setText("Estatus Gerente:");
+
+        gerDescansa.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 102, 0)), javax.swing.BorderFactory.createLineBorder(new java.awt.Color(51, 51, 51), 3)));
+        gerDescansa.setAlignmentX(0.0F);
+        gerDescansa.setAlignmentY(0.0F);
+
+        javax.swing.GroupLayout gerDescansaLayout = new javax.swing.GroupLayout(gerDescansa);
+        gerDescansa.setLayout(gerDescansaLayout);
+        gerDescansaLayout.setHorizontalGroup(
+            gerDescansaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 10, Short.MAX_VALUE)
+        );
+        gerDescansaLayout.setVerticalGroup(
+            gerDescansaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 9, Short.MAX_VALUE)
+        );
+
+        gerTrabaja.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 102, 0)), javax.swing.BorderFactory.createLineBorder(new java.awt.Color(51, 51, 51), 3)));
+        gerTrabaja.setAlignmentX(0.0F);
+        gerTrabaja.setAlignmentY(0.0F);
+
+        javax.swing.GroupLayout gerTrabajaLayout = new javax.swing.GroupLayout(gerTrabaja);
+        gerTrabaja.setLayout(gerTrabajaLayout);
+        gerTrabajaLayout.setHorizontalGroup(
+            gerTrabajaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 10, Short.MAX_VALUE)
+        );
+        gerTrabajaLayout.setVerticalGroup(
+            gerTrabajaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 9, Short.MAX_VALUE)
+        );
+
+        jLabel8.setForeground(new java.awt.Color(51, 51, 51));
+        jLabel8.setText("Trabajando");
+
+        jLabel7.setForeground(new java.awt.Color(51, 51, 51));
+        jLabel7.setText("Descansando");
+
+        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addGap(19, 19, 19)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(gerDescansa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel7)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(gerTrabaja, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel8)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(gerTrabaja, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel7)
+                    .addComponent(gerDescansa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.LEADING))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jPanel1.add(jPanel6);
+        jPanel6.setBounds(370, 80, 370, 50);
+
+        panelFondo.add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 380, 800, 140));
+
+        getContentPane().add(panelFondo, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 820, 530));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void crearProdBotonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_crearProdBotonActionPerformed
-        int cantidad = Integer.parseInt(prodsBotones.getText());
-        if( cantidad < 4){
-            Productor prodBotonTemp =  new Productor(1,(cantidad + 1),(4/1),60);
-            prodsBoton[cantidad] = prodBotonTemp;
-            cantidad++;
-            prodsBotones.setText(String.valueOf(cantidad));
-            System.out.println("Productor Boton Creado");
-            progressBarBoton.setValue(cantidad);
-        } else {
-            System.out.println("Limite de productor de boton alcanzado");
+        if(activo && PBtnActivos < PBtnMax){
+          productoresBotones[PBtnActivos].start();
+          PBtnActivos++;
+          prodsBotones.setText(Integer.toString(PBtnActivos));
+          progressBarBoton.setValue(PBtnActivos);  
+        } else if (PBtnActivos < PBtnMax){
+          PBtnActivos++;
+          prodsBotones.setText(Integer.toString(PBtnActivos));
+          progressBarBoton.setValue(PBtnActivos); 
         }
+        
     }//GEN-LAST:event_crearProdBotonActionPerformed
 
     private void deleteProdBrazoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteProdBrazoActionPerformed
-        int cantidad = Integer.parseInt(prodsBrazos.getText());
-        if( cantidad > 0){
-            cantidad--;
-            prodsBrazos.setText(String.valueOf(cantidad));
-            prodsBrazo[cantidad] = null;
-            System.out.println("Productor Brazo Eliminado");
-            progressBarBrazo.setValue(cantidad);
+        if(activo && PBraActivos >= 1){
+            productoresBrazos[PBraActivos-1].exit = false;
+            productoresBrazos[PBraActivos-1] = new Productor(almacenBrazo, 1, 1, tiempoDia, semCons, semProdBrazo, mutex);
+            PBraActivos--;
+            prodsBrazos.setText(Integer.toString(PBraActivos));
+            progressBarBrazo.setValue(PBraActivos);
+        } else if (PBraActivos >= 1){
+            PBraActivos--;
+            prodsBrazos.setText(Integer.toString(PBraActivos));
+            progressBarBrazo.setValue(PBraActivos);
         }
     }//GEN-LAST:event_deleteProdBrazoActionPerformed
 
     private void crearProdBrazoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_crearProdBrazoActionPerformed
-        int cantidad = Integer.parseInt(prodsBrazos.getText());
-        if(cantidad < 5){
-            Productor prodBrazoTemp =  new Productor(2,(cantidad + 1),1,40);
-            prodsBrazo[cantidad] = prodBrazoTemp;
-            cantidad++;
-            prodsBrazos.setText(String.valueOf(cantidad));
-            System.out.println("Productor Brazo Creado");
-            progressBarBrazo.setValue(cantidad);
-        } else {
-            System.out.println("Limite de productor de brazo alcanzado");
+        if(activo && PBraActivos < PBraMax){
+          productoresBrazos[PBraActivos].start();
+          PBraActivos++;
+          prodsBrazos.setText(Integer.toString(PBraActivos));
+          progressBarBrazo.setValue(PBraActivos);  
+        } else if (PBraActivos < PBraMax){
+          PBraActivos++;
+          prodsBrazos.setText(Integer.toString(PBraActivos));
+          progressBarBrazo.setValue(PBraActivos);  
         }
     }//GEN-LAST:event_crearProdBrazoActionPerformed
 
     private void deleteProdCuerpoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteProdCuerpoActionPerformed
-        int cantidad = Integer.parseInt(prodsCuerpos.getText());
-        if( cantidad > 0){
-            cantidad--;
-            prodsCuerpos.setText(String.valueOf(cantidad));
-            prodsCuerpo[cantidad] = null;
-            System.out.println("Productor Cuerpo Eliminado");
-            progressBarCuerpo.setValue(cantidad);
+        if(activo && PCueActivos >= 1){
+            productoresCuerpos[PCueActivos-1].exit = false;
+            productoresCuerpos[PCueActivos-1] = new Productor(almacenCuerpo, 3, 1, tiempoDia, semCons, semProdCuerpo, mutex);
+            PCueActivos--;
+            prodsCuerpos.setText(Integer.toString(PCueActivos));
+            progressBarCuerpo.setValue(PCueActivos);
+        } else if (PCueActivos >= 1){
+            PCueActivos--;
+            prodsCuerpos.setText(Integer.toString(PCueActivos));
+            progressBarCuerpo.setValue(PCueActivos);
         }
     }//GEN-LAST:event_deleteProdCuerpoActionPerformed
 
     private void crearProdCuerpoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_crearProdCuerpoActionPerformed
-        int cantidad = Integer.parseInt(prodsCuerpos.getText());
-        if(cantidad < 4){
-            Productor prodCCTemp =  new Productor(4,(cantidad + 1),(1/3),15);
-            prodsCuerpo[cantidad] = prodCCTemp;
-            cantidad++;
-            prodsCuerpos.setText(String.valueOf(cantidad));
-            System.out.println("Productor Cuerpo Creado");
-            progressBarCuerpo.setValue(cantidad);
-        } else {
-            System.out.println("Limite de productor de cuerpo alcanzado");
+        if(activo && PCueActivos < PCueMax){
+          productoresCuerpos[PCueActivos].start();
+          PCueActivos++;
+          prodsCuerpos.setText(Integer.toString(PCueActivos));
+          progressBarCuerpo.setValue(PCueActivos);  
+        } else if (PCueActivos < PCueMax) {
+          PCueActivos++;
+          prodsCuerpos.setText(Integer.toString(PCueActivos));
+          progressBarCuerpo.setValue(PCueActivos);  
         }
     }//GEN-LAST:event_crearProdCuerpoActionPerformed
 
     private void deleteProdBotonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteProdBotonActionPerformed
-        int cantidad = Integer.parseInt(prodsBotones.getText());
-        if( cantidad > 0){
-            cantidad--;
-            prodsBotones.setText(String.valueOf(cantidad));
-            prodsBoton[cantidad] = null;
-            System.out.println("Productor Boton Eliminado");
-            progressBarBoton.setValue(cantidad);
+        if(activo && PBtnActivos >= 1){
+            productoresBotones[PBtnActivos-1].exit = false;
+            productoresBotones[PBtnActivos-1] = new Productor(almacenBoton, 1, 4, tiempoDia, semCons, semProdBoton, mutex);
+            PBtnActivos--;
+            prodsBotones.setText(Integer.toString(PBtnActivos));
+            progressBarBoton.setValue(PBtnActivos);
+        } else if (PBtnActivos >= 1){
+            PBtnActivos--;
+            prodsBotones.setText(Integer.toString(PBtnActivos));
+            progressBarBoton.setValue(PBtnActivos);
         }
     }//GEN-LAST:event_deleteProdBotonActionPerformed
 
     private void deleteProdPiernaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteProdPiernaActionPerformed
-        int cantidad = Integer.parseInt(prodsPiernas.getText());
-        if( cantidad > 0){
-            cantidad--;
-            prodsPiernas.setText(String.valueOf(cantidad));
-            prodsPierna[cantidad] = null;
-            System.out.println("Productor Pierna Eliminado");
-            progressBarPierna.setValue(cantidad);
+       if(activo && PPieActivos >= 1){
+            productoresPiernas[PPieActivos-1].exit = false;
+            productoresPiernas[PPieActivos-1] = new Productor(almacenPierna, 2, 1, tiempoDia, semCons, semProdPierna, mutex);
+            PPieActivos--;
+            prodsPiernas.setText(Integer.toString(PPieActivos));
+            progressBarPierna.setValue(PPieActivos);
+        } else if (PPieActivos >= 1){
+            PPieActivos--;
+            prodsPiernas.setText(Integer.toString(PPieActivos));
+            progressBarPierna.setValue(PPieActivos);
         }
     }//GEN-LAST:event_deleteProdPiernaActionPerformed
 
     private void crearProdPiernaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_crearProdPiernaActionPerformed
-        int cantidad = Integer.parseInt(prodsPiernas.getText());
-        if(cantidad < 4){
-            Productor prodPiernaTemp =  new Productor(3,(cantidad + 1),(1/2),36);
-            prodsPierna[cantidad] = prodPiernaTemp;
-            cantidad++;
-            prodsPiernas.setText(String.valueOf(cantidad));
-            System.out.println("Productor Pierna Creado");
-            progressBarPierna.setValue(cantidad);
-        } else {
-            System.out.println("Limite de productor de pierna alcanzado");
+        if(activo && PPieActivos < PPieMax){
+          productoresPiernas[PPieActivos].start();
+          PPieActivos++;
+          prodsPiernas.setText(Integer.toString(PPieActivos));
+          progressBarPierna.setValue(PPieActivos);  
+        } else if (PPieActivos < PPieMax){
+          PPieActivos++;
+          prodsPiernas.setText(Integer.toString(PPieActivos));
+          progressBarPierna.setValue(PPieActivos);  
         }
     }//GEN-LAST:event_crearProdPiernaActionPerformed
 
     private void ensamblarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ensamblarActionPerformed
-        // TODO add your handling code here:
+        if(!activo){
+            notice.setBackground(clr);
+            activo = true;
+            jefe.start();
+            gerente.start();
+            print.start();
+            start();
+            for(int i = 0; i < PBtnActivos; i++){
+                productoresBotones[i].start();
+            }
+            for(int i = 0; i < PBraActivos; i++){
+                productoresBrazos[i].start();
+            }
+            for(int i = 0; i < PPieActivos; i++){
+                productoresPiernas[i].start();
+            }
+            for(int i = 0; i < PCueActivos; i++){
+                productoresCuerpos[i].start();
+            }
+            for(int i = 0; i < EnsamActivos; i++){
+                ensambladores[i].start();
+            }
+        }
     }//GEN-LAST:event_ensamblarActionPerformed
 
     private void crearEnsamActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_crearEnsamActionPerformed
-        if(ensambladoresCount < 5){
-            ensambladoresCount++;
-            ensambladores.setText(String.valueOf(ensambladoresCount));
-            progressBarEnsam.setValue(ensambladoresCount);
+        if(activo && EnsamActivos < EnsamMax){
+          ensambladores[EnsamActivos].start();
+          EnsamActivos++;
+          ensambladoresActivos.setText(Integer.toString(EnsamActivos));
+          progressBarEnsam.setValue(EnsamActivos);  
+        } else if (EnsamActivos < EnsamMax){
+          EnsamActivos++;
+          ensambladoresActivos.setText(Integer.toString(EnsamActivos));
+          progressBarEnsam.setValue(EnsamActivos);  
         }
-        
     }//GEN-LAST:event_crearEnsamActionPerformed
 
     private void deleteEnsam(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteEnsam
-        if(ensambladoresCount > 0){
-            ensambladoresCount--;
-            ensambladores.setText(String.valueOf(ensambladoresCount));
-            progressBarEnsam.setValue(ensambladoresCount);
+        if(activo && EnsamActivos >= 1){
+            ensambladores[EnsamActivos-1].exit = false;
+            ensambladores[EnsamActivos-1] = new Ensamblador(semCons, mutex, semProdBoton, semProdBrazo, semProdPierna, semProdCuerpo, almacenPana,almacenBrazo,almacenPierna,almacenCuerpo,almacenBoton,2,2,1,8,tiempoDia);
+            EnsamActivos--;
+            ensambladoresActivos.setText(Integer.toString(EnsamActivos));
+            progressBarEnsam.setValue(EnsamActivos);
+        } else if ( EnsamActivos >= 1){
+            EnsamActivos--;
+            ensambladoresActivos.setText(Integer.toString(EnsamActivos));
+            progressBarEnsam.setValue(EnsamActivos);
         }
     }//GEN-LAST:event_deleteEnsam
+    
+    private void start() {
+        Thread worker = new Thread() {
+        public void run() {
+            while(true){
+                progressBarAlmacenBoton.setValue(almacenBoton.cantidad);
+                cantidadAlmacenBoton.setText(Integer.toString(almacenBoton.cantidad));
+                
+                progressBarAlmacenBrazo.setValue(almacenBrazo.cantidad);
+                cantidadAlmacenBrazo.setText(Integer.toString(almacenBrazo.cantidad));
+                
+                progressBarAlmacenPierna.setValue(almacenPierna.cantidad);
+                cantidadAlmacenPierna.setText(Integer.toString(almacenPierna.cantidad));
+                
+                progressBarAlmacenCuerpo.setValue(almacenCuerpo.cantidad);
+                cantidadAlmacenCuerpo.setText(Integer.toString(almacenCuerpo.cantidad));
+                
+                cantidadAlmacenPana.setText(Integer.toString(almacenPana.cantidad));
+                
+                if(jefeTrabajando){
+                    jefeTrabaja.setBackground(clr);
+                    jefeDescansa.setBackground(Color.lightGray);
+                } else {
+                    jefeTrabaja.setBackground(Color.lightGray);
+                    jefeDescansa.setBackground(clr);
+                }
+                
+                if(gerenteTrabajando){
+                    gerTrabaja.setBackground(clr);
+                    gerDescansa.setBackground(Color.lightGray);
+                } else {
+                    gerTrabaja.setBackground(Color.lightGray);
+                    gerDescansa.setBackground(clr);
+                }
+            }
+        }
+       };
+
+       worker.start();
+  
+    }
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -777,6 +1213,8 @@ public class Interfaz extends javax.swing.JFrame {
                 new Interfaz().setVisible(true);
             }
         });
+        
+        
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -806,20 +1244,36 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JButton deleteProdCuerpo;
     private javax.swing.JButton deleteProdPierna;
     private javax.swing.JLabel ensambladorPanasLabel;
-    private javax.swing.JTextField ensambladores;
+    private javax.swing.JTextField ensambladoresActivos;
     private javax.swing.JPanel ensamblajePanaPanel;
     private javax.swing.JButton ensamblar;
+    private javax.swing.JPanel gerDescansa;
+    private javax.swing.JPanel gerTrabaja;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
+    private javax.swing.JPanel jefeDescansa;
+    private javax.swing.JPanel jefeTrabaja;
     private javax.swing.JLabel maxAlmacenBoton;
     private javax.swing.JLabel maxAlmacenBrazo;
     private javax.swing.JLabel maxAlmacenCuerpo;
     private javax.swing.JLabel maxAlmacenPierna;
+    private javax.swing.JLabel maxEmpleadosBoton;
     private javax.swing.JLabel maxEmpleadosBrazo;
-    private javax.swing.JLabel maxEmpleadosBrazo1;
-    private javax.swing.JLabel maxEmpleadosBrazo2;
-    private javax.swing.JLabel maxEmpleadosBrazo3;
+    private javax.swing.JLabel maxEmpleadosCuerpo;
     private javax.swing.JLabel maxEmpleadosPana;
+    private javax.swing.JLabel maxEmpleadosPierna;
+    private javax.swing.JPanel notice;
     private javax.swing.JPanel panelAlmacen;
     private javax.swing.JPanel panelFondo;
     private javax.swing.JPanel panelProduccion;
@@ -838,7 +1292,7 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JPanel productorPiernasPanel2;
     private javax.swing.JProgressBar progressBarAlmacenBoton;
     private javax.swing.JProgressBar progressBarAlmacenBrazo;
-    private javax.swing.JProgressBar progressBarAlmacenCuerpo3;
+    private javax.swing.JProgressBar progressBarAlmacenCuerpo;
     private javax.swing.JProgressBar progressBarAlmacenPierna;
     private javax.swing.JProgressBar progressBarBoton;
     private javax.swing.JProgressBar progressBarBrazo;
@@ -846,4 +1300,36 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JProgressBar progressBarEnsam;
     private javax.swing.JProgressBar progressBarPierna;
     // End of variables declaration//GEN-END:variables
+
+    private void readJSON() {
+      JSONParser jsonParser = new JSONParser();
+      try {
+        JSONObject jsonObject = (JSONObject) jsonParser.parse(new FileReader("C:\\Users\\nicoc\\OneDrive\\Documents\\NetBeansProjects\\Proyecto1SOBolinagaCuriel\\src\\test\\java\\datos.json"));
+        tiempoDia = Integer.parseInt((String) jsonObject.get("Tiempo_Dia"));
+        diaDespachos = Integer.parseInt((String)jsonObject.get("Dias_Despacho"));
+        maxBotones = Integer.parseInt((String)jsonObject.get("Maximo_Almacen_Botones"));
+        maxBrazos = Integer.parseInt((String) jsonObject.get("Maximo_Almacen_Brazos"));
+        maxPiernas = Integer.parseInt((String) jsonObject.get("Maximo_Almacen_Piernas"));
+        maxCuerpos = Integer.parseInt((String) jsonObject.get("Maximo_Almacen_Cuerpos"));
+        PBtnMax = Integer.parseInt((String) jsonObject.get("Maximo_Productores_Botones"));
+        PBraMax = Integer.parseInt((String) jsonObject.get("Maximo_Productores_Brazos"));
+        PPieMax = Integer.parseInt((String) jsonObject.get("Maximo_Productores_Piernas"));
+        PCueMax = Integer.parseInt((String) jsonObject.get("Maximo_Productores_Cuerpos"));
+        EnsamMax = Integer.parseInt((String) jsonObject.get("Maximo_Ensambladores"));
+        PBtnActivos = Integer.parseInt((String) jsonObject.get("Productores_Botones_Activos"));
+        PBraActivos = Integer.parseInt((String) jsonObject.get("Productores_Brazos_Activos"));
+        PPieActivos = Integer.parseInt((String) jsonObject.get("Productores_Piernas_Activos"));
+        PCueActivos = Integer.parseInt((String) jsonObject.get("Productores_Cuerpos_Activos"));
+        EnsamActivos = Integer.parseInt((String) jsonObject.get("Ensambladores_Activos"));
+        jefeTrabajo = Integer.parseInt((String) jsonObject.get("Tiempo_Trabajo_Jefe"));
+        gerenteDescanso = Integer.parseInt((String) jsonObject.get("Tiempo_Descanso_Gerente"));
+      } catch (FileNotFoundException e) {
+        e.printStackTrace();
+          System.out.println("File no encontrado");
+      } catch (IOException e) {
+        e.printStackTrace();
+      } catch (ParseException e) {
+        e.printStackTrace();
+      }
+    }
 }
