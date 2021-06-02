@@ -27,17 +27,18 @@ public class Gerente extends Thread {
   public void run() {
     while(true){
         try{
+          Interfaz.gerenteTrabajando = false;
+          TimeUnit.SECONDS.sleep(tiempoDormirSecs);
           this.semGerente.acquire();
           this.contador.acquire();
           if(dias.cantidad == diaDespachos){
                dias.extraer(dias.cantidad);
+               Interfaz.panasTotales += pana.cantidad;
                pana.extraer(pana.cantidad);
                this.contador.release();
                this.semJefe.release(diaDespachos);
           } else {
               this.contador.release();
-              Interfaz.gerenteTrabajando = false;
-              TimeUnit.SECONDS.sleep(tiempoDormirSecs);
               Interfaz.gerenteTrabajando = true;
               TimeUnit.SECONDS.sleep(tiempoDia - tiempoDormirSecs);
           }

@@ -8,7 +8,8 @@ public class Sout extends Thread{
   private Almacen almPana;
   private Almacen dias;
   private int dia;
-
+  static int seconds = 1;
+  
   public Sout(Almacen pana, Almacen brazo, Almacen pierna, Almacen cuerpo, Almacen boton, int dia, Almacen dias){
     this.almBrazo = brazo;
     this.almPierna = pierna;
@@ -21,7 +22,6 @@ public class Sout extends Thread{
 
   @Override
   public void run(){
-    int seconds = 1;
     while(true){
       if(seconds > dia){
         seconds = 1;

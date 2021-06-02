@@ -25,12 +25,12 @@ public class Jefe extends Thread {
       while(true){
         try {
           this.semJefe.acquire();
-          this.contador.acquire();
-          dias.guardar();
-          Interfaz.jefeTrabajando = true;
-          System.out.println("<<<< Trabajando >>>>");
-          TimeUnit.SECONDS.sleep(tiempoTrabajoSecs);
-          this.contador.release();
+            this.contador.acquire();
+                dias.guardar();
+                Interfaz.jefeTrabajando = true;
+                System.out.println("<<<< Trabajando >>>>");
+                TimeUnit.SECONDS.sleep(tiempoTrabajoSecs);
+            this.contador.release();
           this.semGerente.release();
           Interfaz.jefeTrabajando = false;
           System.out.println("<<<< Durmiendo >>>>");

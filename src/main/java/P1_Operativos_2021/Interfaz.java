@@ -1,15 +1,10 @@
 package P1_Operativos_2021;
 
 import java.awt.Color;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -63,7 +58,8 @@ public class Interfaz extends javax.swing.JFrame {
     Color clr = new Color(214, 154, 86);
     static boolean gerenteTrabajando = false;
     static boolean jefeTrabajando = false;
-
+    static int panasTotales = 0;
+    
     public Interfaz(){
         initComponents();
         readJSON();
@@ -147,7 +143,9 @@ public class Interfaz extends javax.swing.JFrame {
         prodsPiernas.setText(Integer.toString(PPieActivos));
         ensambladoresActivos.setText(Integer.toString(EnsamActivos));
         
-        
+        diasFaltan.setText(Integer.toString(diaDespachos));
+        seconds.setValue(0);
+        seconds.setMaximum(tiempoDia);
     }
     
     @SuppressWarnings("unchecked")
@@ -217,12 +215,12 @@ public class Interfaz extends javax.swing.JFrame {
         almacenBrazoPanel4 = new javax.swing.JPanel();
         almacenPanaLabel = new javax.swing.JLabel();
         cantidadAlmacenPana = new javax.swing.JTextField();
-        ensamblar = new javax.swing.JButton();
-        notice = new javax.swing.JPanel();
+        jLabel10 = new javax.swing.JLabel();
+        panasTotal = new javax.swing.JTextField();
         jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
+        diasFaltan = new javax.swing.JTextField();
         jPanel5 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jefeDescansa = new javax.swing.JPanel();
@@ -235,6 +233,12 @@ public class Interfaz extends javax.swing.JFrame {
         gerTrabaja = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
+        seconds = new javax.swing.JProgressBar();
+        counterSeconds = new javax.swing.JTextField();
+        ensamblar = new javax.swing.JButton();
+        jLabel11 = new javax.swing.JLabel();
+        horas = new javax.swing.JTextField();
+        notice = new javax.swing.JPanel();
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -725,29 +729,21 @@ public class Interfaz extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        ensamblar.setBackground(new java.awt.Color(255, 255, 255));
-        ensamblar.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        ensamblar.setText("Ensamblar");
-        ensamblar.addActionListener(new java.awt.event.ActionListener() {
+        jLabel10.setForeground(new java.awt.Color(204, 204, 204));
+        jLabel10.setText("Total pana entregados:");
+
+        panasTotal.setEditable(false);
+        panasTotal.setBackground(new java.awt.Color(51, 51, 51));
+        panasTotal.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        panasTotal.setForeground(new java.awt.Color(204, 204, 204));
+        panasTotal.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        panasTotal.setText("0");
+        panasTotal.setBorder(null);
+        panasTotal.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ensamblarActionPerformed(evt);
+                panasTotalActionPerformed(evt);
             }
         });
-
-        notice.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 102, 0)), javax.swing.BorderFactory.createLineBorder(new java.awt.Color(51, 51, 51), 3)));
-        notice.setAlignmentX(0.0F);
-        notice.setAlignmentY(0.0F);
-
-        javax.swing.GroupLayout noticeLayout = new javax.swing.GroupLayout(notice);
-        notice.setLayout(noticeLayout);
-        noticeLayout.setHorizontalGroup(
-            noticeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 9, Short.MAX_VALUE)
-        );
-        noticeLayout.setVerticalGroup(
-            noticeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 10, Short.MAX_VALUE)
-        );
 
         javax.swing.GroupLayout panelProduccion1Layout = new javax.swing.GroupLayout(panelProduccion1);
         panelProduccion1.setLayout(panelProduccion1Layout);
@@ -759,10 +755,11 @@ public class Interfaz extends javax.swing.JFrame {
                     .addComponent(ensamblajePanaPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(panelProduccion1Layout.createSequentialGroup()
                         .addComponent(almacenBrazoPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 64, Short.MAX_VALUE)
-                        .addComponent(notice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(28, 28, 28)
+                        .addComponent(jLabel10)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(ensamblar, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(panasTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         panelProduccion1Layout.setVerticalGroup(
@@ -770,16 +767,13 @@ public class Interfaz extends javax.swing.JFrame {
             .addGroup(panelProduccion1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(ensamblajePanaPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(panelProduccion1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(panelProduccion1Layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addGroup(panelProduccion1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(almacenBrazoPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ensamblar, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(panelProduccion1Layout.createSequentialGroup()
-                        .addGap(28, 28, 28)
-                        .addComponent(notice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(11, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(panelProduccion1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(almacenBrazoPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(panelProduccion1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel10)
+                        .addComponent(panasTotal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(15, Short.MAX_VALUE))
         );
 
         panelFondo.add(panelProduccion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 200, 410, 170));
@@ -788,18 +782,18 @@ public class Interfaz extends javax.swing.JFrame {
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Estadisticas", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 0, 12), new java.awt.Color(255, 255, 255))); // NOI18N
         jPanel1.setLayout(null);
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
-        jLabel1.setForeground(new java.awt.Color(255, 51, 51));
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("MATTEL®");
-        jPanel1.add(jLabel1);
-        jLabel1.setBounds(740, 110, 60, 30);
-
         jPanel3.setBackground(new java.awt.Color(204, 204, 204));
 
         jLabel2.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jLabel2.setForeground(new java.awt.Color(51, 51, 51));
         jLabel2.setText("Dias para la siguiente entrega:");
+
+        diasFaltan.setEditable(false);
+        diasFaltan.setBackground(new java.awt.Color(204, 204, 204));
+        diasFaltan.setFont(new java.awt.Font("Courier New", 0, 24)); // NOI18N
+        diasFaltan.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        diasFaltan.setText("0");
+        diasFaltan.setBorder(null);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -808,15 +802,21 @@ public class Interfaz extends javax.swing.JFrame {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGap(18, 18, 18)
                 .addComponent(jLabel2)
-                .addContainerGap(66, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(diasFaltan, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(26, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 50, Short.MAX_VALUE)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(diasFaltan, javax.swing.GroupLayout.DEFAULT_SIZE, 50, Short.MAX_VALUE)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         jPanel1.add(jPanel3);
-        jPanel3.setBounds(10, 20, 350, 50);
+        jPanel3.setBounds(10, 20, 360, 50);
 
         jPanel5.setBackground(new java.awt.Color(204, 204, 204));
 
@@ -871,9 +871,9 @@ public class Interfaz extends javax.swing.JFrame {
                 .addComponent(jefeDescansa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 23, Short.MAX_VALUE)
                 .addComponent(jefeTrabaja, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel6)
                 .addGap(22, 22, 22))
         );
@@ -894,7 +894,7 @@ public class Interfaz extends javax.swing.JFrame {
         );
 
         jPanel1.add(jPanel5);
-        jPanel5.setBounds(10, 80, 350, 50);
+        jPanel5.setBounds(10, 80, 360, 50);
 
         jPanel6.setBackground(new java.awt.Color(204, 204, 204));
 
@@ -949,11 +949,11 @@ public class Interfaz extends javax.swing.JFrame {
                 .addComponent(gerDescansa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel7)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(24, 24, 24)
                 .addComponent(gerTrabaja, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel8)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -963,7 +963,7 @@ public class Interfaz extends javax.swing.JFrame {
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addGap(16, 16, 16)
                 .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(gerTrabaja, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(gerTrabaja, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel7)
                     .addComponent(gerDescansa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.LEADING))
@@ -971,7 +971,66 @@ public class Interfaz extends javax.swing.JFrame {
         );
 
         jPanel1.add(jPanel6);
-        jPanel6.setBounds(370, 80, 370, 50);
+        jPanel6.setBounds(400, 80, 380, 50);
+
+        seconds.setMinimum(1);
+        jPanel1.add(seconds);
+        seconds.setBounds(400, 60, 350, 12);
+
+        counterSeconds.setEditable(false);
+        counterSeconds.setBackground(new java.awt.Color(51, 51, 51));
+        counterSeconds.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
+        counterSeconds.setForeground(new java.awt.Color(204, 204, 204));
+        counterSeconds.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        counterSeconds.setText("0");
+        counterSeconds.setBorder(null);
+        jPanel1.add(counterSeconds);
+        counterSeconds.setBounds(750, 50, 40, 30);
+
+        ensamblar.setBackground(new java.awt.Color(255, 255, 255));
+        ensamblar.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        ensamblar.setText("Ensamblar");
+        ensamblar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ensamblarActionPerformed(evt);
+            }
+        });
+        jPanel1.add(ensamblar);
+        ensamblar.setBounds(610, 20, 130, 30);
+
+        jLabel11.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        jLabel11.setForeground(new java.awt.Color(204, 204, 204));
+        jLabel11.setText("Hora del dia:");
+        jPanel1.add(jLabel11);
+        jLabel11.setBounds(400, 30, 120, 24);
+
+        horas.setEditable(false);
+        horas.setBackground(new java.awt.Color(51, 51, 51));
+        horas.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        horas.setForeground(new java.awt.Color(204, 204, 204));
+        horas.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        horas.setText("0:00 Hs");
+        horas.setBorder(null);
+        jPanel1.add(horas);
+        horas.setBounds(510, 30, 74, 24);
+
+        notice.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 102, 0)), javax.swing.BorderFactory.createLineBorder(new java.awt.Color(51, 51, 51), 3)));
+        notice.setAlignmentX(0.0F);
+        notice.setAlignmentY(0.0F);
+
+        javax.swing.GroupLayout noticeLayout = new javax.swing.GroupLayout(notice);
+        notice.setLayout(noticeLayout);
+        noticeLayout.setHorizontalGroup(
+            noticeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 12, Short.MAX_VALUE)
+        );
+        noticeLayout.setVerticalGroup(
+            noticeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 12, Short.MAX_VALUE)
+        );
+
+        jPanel1.add(notice);
+        notice.setBounds(760, 30, 20, 20);
 
         panelFondo.add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 380, 800, 140));
 
@@ -1141,6 +1200,10 @@ public class Interfaz extends javax.swing.JFrame {
             progressBarEnsam.setValue(EnsamActivos);
         }
     }//GEN-LAST:event_deleteEnsam
+
+    private void panasTotalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_panasTotalActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_panasTotalActionPerformed
     
     private void start() {
         Thread worker = new Thread() {
@@ -1175,6 +1238,12 @@ public class Interfaz extends javax.swing.JFrame {
                     gerTrabaja.setBackground(Color.lightGray);
                     gerDescansa.setBackground(clr);
                 }
+                
+                diasFaltan.setText(Integer.toString(diaDespachos - dias.cantidad));
+                seconds.setValue(print.seconds - 1);
+                counterSeconds.setText(Integer.toString(print.seconds - 1));
+                horas.setText(Integer.toString((24*(print.seconds - 1))/tiempoDia) + ":00 Hs");
+                panasTotal.setText(Integer.toString(panasTotales));
             }
         }
        };
@@ -1233,6 +1302,7 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JTextField cantidadAlmacenCuerpo;
     private javax.swing.JTextField cantidadAlmacenPana;
     private javax.swing.JTextField cantidadAlmacenPierna;
+    private javax.swing.JTextField counterSeconds;
     private javax.swing.JButton crearEnsam;
     private javax.swing.JButton crearProdBoton;
     private javax.swing.JButton crearProdBrazo;
@@ -1243,13 +1313,16 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JButton deleteProdBrazo;
     private javax.swing.JButton deleteProdCuerpo;
     private javax.swing.JButton deleteProdPierna;
+    private javax.swing.JTextField diasFaltan;
     private javax.swing.JLabel ensambladorPanasLabel;
     private javax.swing.JTextField ensambladoresActivos;
     private javax.swing.JPanel ensamblajePanaPanel;
     private javax.swing.JButton ensamblar;
     private javax.swing.JPanel gerDescansa;
     private javax.swing.JPanel gerTrabaja;
-    private javax.swing.JLabel jLabel1;
+    private javax.swing.JTextField horas;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1274,6 +1347,7 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JLabel maxEmpleadosPana;
     private javax.swing.JLabel maxEmpleadosPierna;
     private javax.swing.JPanel notice;
+    private javax.swing.JTextField panasTotal;
     private javax.swing.JPanel panelAlmacen;
     private javax.swing.JPanel panelFondo;
     private javax.swing.JPanel panelProduccion;
@@ -1299,12 +1373,13 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JProgressBar progressBarCuerpo;
     private javax.swing.JProgressBar progressBarEnsam;
     private javax.swing.JProgressBar progressBarPierna;
+    private javax.swing.JProgressBar seconds;
     // End of variables declaration//GEN-END:variables
 
     private void readJSON() {
       JSONParser jsonParser = new JSONParser();
       try {
-        JSONObject jsonObject = (JSONObject) jsonParser.parse(new FileReader("C:\\Users\\nicoc\\OneDrive\\Documents\\NetBeansProjects\\Proyecto1SOBolinagaCuriel\\src\\test\\java\\datos.json"));
+        JSONObject jsonObject = (JSONObject) jsonParser.parse(new FileReader(".\\src\\test\\java\\datos.json"));
         tiempoDia = Integer.parseInt((String) jsonObject.get("Tiempo_Dia"));
         diaDespachos = Integer.parseInt((String)jsonObject.get("Dias_Despacho"));
         maxBotones = Integer.parseInt((String)jsonObject.get("Maximo_Almacen_Botones"));
