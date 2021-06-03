@@ -37,11 +37,14 @@ public class Gerente extends Thread {
                pana.extraer(pana.cantidad);
                this.contador.release();
                this.semJefe.release(diaDespachos);
-          } else {
-              this.contador.release();
+          } else if(Interfaz.jefeTrabajando == false) {
               Interfaz.gerenteTrabajando = true;
               TimeUnit.SECONDS.sleep(tiempoDia - tiempoDormirSecs);
+              this.contador.release();
+          } else {
+              this.contador.release();
           }
+          
         } catch (InterruptedException e) {
             e.printStackTrace();
         }  

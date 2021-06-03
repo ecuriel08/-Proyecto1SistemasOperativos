@@ -1,6 +1,6 @@
 {
-   "Tiempo_Dia": "12",
-   "Dias_Despacho": "15",
+   "Tiempo_Dia": "4",
+   "Dias_Despacho": "5",
    "Maximo_Almacen_Botones": "60",
    "Maximo_Almacen_Brazos": "40",
    "Maximo_Almacen_Piernas": "36",

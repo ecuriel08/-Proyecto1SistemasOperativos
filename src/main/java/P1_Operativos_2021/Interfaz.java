@@ -233,12 +233,12 @@ public class Interfaz extends javax.swing.JFrame {
         gerTrabaja = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
+        notice = new javax.swing.JPanel();
+        ensamblar = new javax.swing.JButton();
+        horas = new javax.swing.JTextField();
+        jLabel11 = new javax.swing.JLabel();
         seconds = new javax.swing.JProgressBar();
         counterSeconds = new javax.swing.JTextField();
-        ensamblar = new javax.swing.JButton();
-        jLabel11 = new javax.swing.JLabel();
-        horas = new javax.swing.JTextField();
-        notice = new javax.swing.JPanel();
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -647,6 +647,7 @@ public class Interfaz extends javax.swing.JFrame {
         panelProduccion1.setBackground(new java.awt.Color(51, 51, 51));
         panelProduccion1.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Ensamblaje", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Copperplate Gothic Bold", 0, 12), new java.awt.Color(255, 255, 255))); // NOI18N
         panelProduccion1.setForeground(new java.awt.Color(255, 255, 255));
+        panelProduccion1.setLayout(null);
 
         ensamblajePanaPanel.setBackground(new java.awt.Color(204, 204, 204));
         ensamblajePanaPanel.setLayout(null);
@@ -695,6 +696,9 @@ public class Interfaz extends javax.swing.JFrame {
         ensamblajePanaPanel.add(maxEmpleadosPana);
         maxEmpleadosPana.setBounds(270, 10, 40, 20);
 
+        panelProduccion1.add(ensamblajePanaPanel);
+        ensamblajePanaPanel.setBounds(12, 24, 386, 71);
+
         almacenBrazoPanel4.setBackground(new java.awt.Color(204, 204, 204));
 
         almacenPanaLabel.setFont(new java.awt.Font("Copperplate Gothic Bold", 1, 18)); // NOI18N
@@ -729,8 +733,14 @@ public class Interfaz extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        panelProduccion1.add(almacenBrazoPanel4);
+        almacenBrazoPanel4.setBounds(12, 113, 173, 36);
+
+        jLabel10.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
         jLabel10.setForeground(new java.awt.Color(204, 204, 204));
-        jLabel10.setText("Total pana entregados:");
+        jLabel10.setText("Total panas entregados:");
+        panelProduccion1.add(jLabel10);
+        jLabel10.setBounds(200, 120, 160, 16);
 
         panasTotal.setEditable(false);
         panasTotal.setBackground(new java.awt.Color(51, 51, 51));
@@ -744,37 +754,8 @@ public class Interfaz extends javax.swing.JFrame {
                 panasTotalActionPerformed(evt);
             }
         });
-
-        javax.swing.GroupLayout panelProduccion1Layout = new javax.swing.GroupLayout(panelProduccion1);
-        panelProduccion1.setLayout(panelProduccion1Layout);
-        panelProduccion1Layout.setHorizontalGroup(
-            panelProduccion1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelProduccion1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(panelProduccion1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(ensamblajePanaPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(panelProduccion1Layout.createSequentialGroup()
-                        .addComponent(almacenBrazoPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(28, 28, 28)
-                        .addComponent(jLabel10)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(panasTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-        panelProduccion1Layout.setVerticalGroup(
-            panelProduccion1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelProduccion1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(ensamblajePanaPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(panelProduccion1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(almacenBrazoPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(panelProduccion1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel10)
-                        .addComponent(panasTotal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(15, Short.MAX_VALUE))
-        );
+        panelProduccion1.add(panasTotal);
+        panasTotal.setBounds(350, 114, 50, 30);
 
         panelFondo.add(panelProduccion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 200, 410, 170));
 
@@ -804,7 +785,7 @@ public class Interfaz extends javax.swing.JFrame {
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(diasFaltan, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(26, Short.MAX_VALUE))
+                .addContainerGap(46, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -816,7 +797,7 @@ public class Interfaz extends javax.swing.JFrame {
         );
 
         jPanel1.add(jPanel3);
-        jPanel3.setBounds(10, 20, 360, 50);
+        jPanel3.setBounds(400, 20, 380, 50);
 
         jPanel5.setBackground(new java.awt.Color(204, 204, 204));
 
@@ -867,34 +848,36 @@ public class Interfaz extends javax.swing.JFrame {
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addGap(17, 17, 17)
                 .addComponent(jLabel3)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 45, Short.MAX_VALUE)
                 .addComponent(jefeDescansa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 23, Short.MAX_VALUE)
+                .addGap(12, 12, 12)
                 .addComponent(jefeTrabaja, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel6)
-                .addGap(22, 22, 22))
+                .addGap(16, 16, 16))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(jLabel5)
-                        .addComponent(jefeDescansa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel6))
-                    .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addGap(1, 1, 1)
-                        .addComponent(jefeTrabaja, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(16, Short.MAX_VALUE))
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jefeDescansa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel5Layout.createSequentialGroup()
+                            .addGap(17, 17, 17)
+                            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabel5)
+                                .addComponent(jLabel6)))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
+                            .addGap(16, 16, 16)
+                            .addComponent(jefeTrabaja, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(17, Short.MAX_VALUE))
         );
 
         jPanel1.add(jPanel5);
-        jPanel5.setBounds(10, 80, 360, 50);
+        jPanel5.setBounds(10, 20, 370, 50);
 
         jPanel6.setBackground(new java.awt.Color(204, 204, 204));
 
@@ -944,16 +927,16 @@ public class Interfaz extends javax.swing.JFrame {
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addGap(19, 19, 19)
-                .addComponent(jLabel4)
+                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(gerDescansa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel7)
-                .addGap(24, 24, 24)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(gerTrabaja, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel8)
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -971,48 +954,7 @@ public class Interfaz extends javax.swing.JFrame {
         );
 
         jPanel1.add(jPanel6);
-        jPanel6.setBounds(400, 80, 380, 50);
-
-        seconds.setMinimum(1);
-        jPanel1.add(seconds);
-        seconds.setBounds(400, 60, 350, 12);
-
-        counterSeconds.setEditable(false);
-        counterSeconds.setBackground(new java.awt.Color(51, 51, 51));
-        counterSeconds.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
-        counterSeconds.setForeground(new java.awt.Color(204, 204, 204));
-        counterSeconds.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        counterSeconds.setText("0");
-        counterSeconds.setBorder(null);
-        jPanel1.add(counterSeconds);
-        counterSeconds.setBounds(750, 50, 40, 30);
-
-        ensamblar.setBackground(new java.awt.Color(255, 255, 255));
-        ensamblar.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        ensamblar.setText("Ensamblar");
-        ensamblar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ensamblarActionPerformed(evt);
-            }
-        });
-        jPanel1.add(ensamblar);
-        ensamblar.setBounds(610, 20, 130, 30);
-
-        jLabel11.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
-        jLabel11.setForeground(new java.awt.Color(204, 204, 204));
-        jLabel11.setText("Hora del dia:");
-        jPanel1.add(jLabel11);
-        jLabel11.setBounds(400, 30, 120, 24);
-
-        horas.setEditable(false);
-        horas.setBackground(new java.awt.Color(51, 51, 51));
-        horas.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
-        horas.setForeground(new java.awt.Color(204, 204, 204));
-        horas.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        horas.setText("0:00 Hs");
-        horas.setBorder(null);
-        jPanel1.add(horas);
-        horas.setBounds(510, 30, 74, 24);
+        jPanel6.setBounds(10, 80, 370, 50);
 
         notice.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 102, 0)), javax.swing.BorderFactory.createLineBorder(new java.awt.Color(51, 51, 51), 3)));
         notice.setAlignmentX(0.0F);
@@ -1030,7 +972,48 @@ public class Interfaz extends javax.swing.JFrame {
         );
 
         jPanel1.add(notice);
-        notice.setBounds(760, 30, 20, 20);
+        notice.setBounds(760, 110, 20, 20);
+
+        ensamblar.setBackground(new java.awt.Color(255, 255, 255));
+        ensamblar.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        ensamblar.setText("Ensamblar");
+        ensamblar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ensamblarActionPerformed(evt);
+            }
+        });
+        jPanel1.add(ensamblar);
+        ensamblar.setBounds(610, 100, 130, 30);
+
+        horas.setEditable(false);
+        horas.setBackground(new java.awt.Color(51, 51, 51));
+        horas.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        horas.setForeground(new java.awt.Color(204, 204, 204));
+        horas.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        horas.setText("0:00 Hs");
+        horas.setBorder(null);
+        jPanel1.add(horas);
+        horas.setBounds(520, 100, 74, 24);
+
+        jLabel11.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        jLabel11.setForeground(new java.awt.Color(204, 204, 204));
+        jLabel11.setText("Hora del dia:");
+        jPanel1.add(jLabel11);
+        jLabel11.setBounds(400, 100, 120, 24);
+
+        seconds.setMinimum(1);
+        jPanel1.add(seconds);
+        seconds.setBounds(400, 80, 350, 12);
+
+        counterSeconds.setEditable(false);
+        counterSeconds.setBackground(new java.awt.Color(51, 51, 51));
+        counterSeconds.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
+        counterSeconds.setForeground(new java.awt.Color(204, 204, 204));
+        counterSeconds.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        counterSeconds.setText("0");
+        counterSeconds.setBorder(null);
+        jPanel1.add(counterSeconds);
+        counterSeconds.setBounds(750, 70, 40, 30);
 
         panelFondo.add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 380, 800, 140));
 
