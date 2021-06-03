@@ -1,0 +1,20 @@
+{
+   "Tiempo_Dia": "4",
+   "Dias_Despacho": "5",
+   "Maximo_Almacen_Botones": "60",
+   "Maximo_Almacen_Brazos": "40",
+   "Maximo_Almacen_Piernas": "36",
+   "Maximo_Almacen_Cuerpos": "15",
+   "Maximo_Productores_Botones": "4",
+   "Maximo_Productores_Brazos": "5",
+   "Maximo_Productores_Piernas": "4",
+   "Maximo_Productores_Cuerpos": "4",
+   "Maximo_Ensambladores": "5",
+   "Productores_Botones_Activos": "1",
+   "Productores_Brazos_Activos": "1",
+   "Productores_Piernas_Activos": "1",
+   "Productores_Cuerpos_Activos": "1",
+   "Ensambladores_Activos": "1",
+   "Tiempo_Trabajo_Jefe": "8", 
+   "Tiempo_Descanso_Gerente": "8"
+}

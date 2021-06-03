@@ -1,14 +1,53 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package P1_Operativos_2021;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Semaphore;
 
-/**
- *
- * @author Nicolas Bolinaga, Eduardo Curiel
- */
-public class Gerente {
-    
+public class Gerente extends Thread {
+  private Almacen pana;
+  private Almacen dias;
+  private int tiempoDormirSecs;
+  private int tiempoDia;
+  private int diaDespachos;
+  Semaphore contador;
+  Semaphore semJefe;
+  Semaphore semGerente;
+  
+  public Gerente(Almacen pana, Almacen dias, int tiempoDia, int tiempoDormirHoras, Semaphore semGerente, Semaphore semJefe, Semaphore contador, int diaDespachos){
+      this.pana = pana;
+      this.dias = dias;
+      this.tiempoDia = tiempoDia;
+      this.tiempoDormirSecs = (tiempoDia*tiempoDormirHoras)/24;
+      this.semGerente = semGerente;
+      this.semJefe = semJefe;
+      this.contador = contador;
+      this.diaDespachos = diaDespachos;
+  }
+
+  @Override		
+  public void run() {
+    while(true){
+        try{
+          Interfaz.gerenteTrabajando = false;
+          TimeUnit.SECONDS.sleep(tiempoDormirSecs);
+          this.semGerente.acquire();
+          this.contador.acquire();
+          if(dias.cantidad == diaDespachos){
+               dias.extraer(dias.cantidad);
+               Interfaz.panasTotales += pana.cantidad;
+               pana.extraer(pana.cantidad);
+               this.contador.release();
+               this.semJefe.release(diaDespachos);
+          } else if(Interfaz.jefeTrabajando == false) {
+              Interfaz.gerenteTrabajando = true;
+              TimeUnit.SECONDS.sleep(tiempoDia - tiempoDormirSecs);
+              this.contador.release();
+          } else {
+              this.contador.release();
+          }
+          
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }  
+    }
+  }
 }
